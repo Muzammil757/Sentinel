@@ -1,4 +1,4 @@
-from matrix import check_conflict
+from conflict_matrix.matrix import check_conflict
 
 def evaluate_agent_actions(
     action_a: dict,

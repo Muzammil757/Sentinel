@@ -1,8 +1,7 @@
-from matrix import check_conflict
+from conflict_matrix.matrix import check_conflict
 
 
-def run_tests():
-    # Scenario 1: known conflict
+def test_known_conflict_release_payment_vs_hold_related_actions():
     result = check_conflict(
         "RELEASE_PAYMENT",
         "HOLD_RELATED_ACTIONS",
@@ -10,7 +9,8 @@ def run_tests():
     )
     assert result["conflict"] is True
 
-    # Scenario 1: known no-op
+
+def test_known_no_conflict_release_payment_vs_close_case():
     result = check_conflict(
         "RELEASE_PAYMENT",
         "CLOSE_CASE",
@@ -18,7 +18,8 @@ def run_tests():
     )
     assert result["conflict"] is False
 
-    # Scenario 2: known conflict
+
+def test_known_conflict_hold_order_vs_preserve_experience():
     result = check_conflict(
         "HOLD_ORDER",
         "PRESERVE_EXPERIENCE",
@@ -26,7 +27,8 @@ def run_tests():
     )
     assert result["conflict"] is True
 
-    # Variant conflict
+
+def test_known_conflict_hold_order_vs_win_back_offer():
     result = check_conflict(
         "HOLD_ORDER",
         "WIN_BACK_OFFER",
@@ -34,16 +36,11 @@ def run_tests():
     )
     assert result["conflict"] is True
 
-    # Unknown pair
+
+def test_unknown_pair_defaults_to_no_conflict():
     result = check_conflict(
         "RELEASE_PAYMENT",
         "APPROVE",
         "order_vendor",
     )
     assert result["conflict"] is False
-
-    print("All Conflict Matrix tests passed.")
-
-
-if __name__ == "__main__":
-    run_tests()

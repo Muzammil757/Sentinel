@@ -1,7 +1,7 @@
-from disputes import generate_dispute_action
+from mock_agents.disputes import generate_dispute_action
 
 
-def run_test():
+def test_generate_dispute_action():
     result = generate_dispute_action(
         dispute_id="DSP-7742",
         order_id="ORD-88213",
@@ -16,9 +16,3 @@ def run_test():
     assert result["disputed_amount"] == 400000
     assert result["proposed_action"] == "HOLD_RELATED_ACTIONS"
     assert result["confidence"] == 0.95
-
-    print("Dispute Agent test passed.")
-
-
-if __name__ == "__main__":
-    run_test()

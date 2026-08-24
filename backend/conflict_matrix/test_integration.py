@@ -1,10 +1,7 @@
-from integration import evaluate_agent_actions
+from conflict_matrix.integration import evaluate_agent_actions
 
 
-def run_tests():
-    # Scenario 1:
-    # Payouts wants to release payment.
-    # Dispute wants to hold related actions.
+def test_evaluate_agent_actions_payouts_vs_dispute_conflict():
     payouts_action = {
         "agent": "payouts",
         "proposed_action": "RELEASE_PAYMENT",
@@ -25,9 +22,8 @@ def run_tests():
     assert result["agent_a"] == "payouts"
     assert result["agent_b"] == "dispute"
 
-    # Scenario 2:
-    # RTO wants to hold the order.
-    # Retention wants to send a win-back offer.
+
+def test_evaluate_agent_actions_rto_vs_retention_conflict():
     rto_action = {
         "agent": "rto",
         "proposed_action": "HOLD_ORDER",
@@ -47,9 +43,3 @@ def run_tests():
     assert result["conflict"] is True
     assert result["agent_a"] == "rto"
     assert result["agent_b"] == "retention"
-
-    print("Conflict Matrix integration tests passed.")
-
-
-if __name__ == "__main__":
-    run_tests()

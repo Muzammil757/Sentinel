@@ -1,7 +1,7 @@
-from payouts import generate_payout_action
+from mock_agents.payouts import generate_payout_action
 
 
-def run_test():
+def test_generate_payout_action():
     result = generate_payout_action(
         vendor_id="V-104",
         amount=400000,
@@ -16,9 +16,3 @@ def run_test():
     assert result["invoice_id"] == "INV-3391"
     assert result["days_overdue"] == 14
     assert result["confidence"] == 0.95
-
-    print("Payouts Agent test passed.")
-
-
-if __name__ == "__main__":
-    run_test()

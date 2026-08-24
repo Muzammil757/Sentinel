@@ -1,7 +1,7 @@
-from rto import generate_rto_action
+from mock_agents.rto import generate_rto_action
 
 
-def run_test():
+def test_generate_rto_action():
     result = generate_rto_action(
         order_id="ORD-88213",
         customer_id="CUS-441",
@@ -16,9 +16,3 @@ def run_test():
     assert result["shipment_status"] == "IN_TRANSIT"
     assert result["proposed_action"] == "HOLD_ORDER"
     assert result["confidence"] == 0.95
-
-    print("RTO Agent test passed.")
-
-
-if __name__ == "__main__":
-    run_test()
