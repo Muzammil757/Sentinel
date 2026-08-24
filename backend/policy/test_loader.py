@@ -81,6 +81,14 @@ def test_weight_profiles_are_valid():
         assert abs(total - 1.0) <= 0.01
 
 
+def test_profile_selection_rules_reference_defined_profiles():
+    policy = load_policy()
+    profiles = policy["weights"]["profiles"]
+
+    for rule in policy["profile_selection"]["rules"]:
+        assert rule["profile"] in profiles
+
+
 def test_required_hard_constraints_present():
     policy = load_policy()
     ids = {constraint["id"] for constraint in policy["hard_constraints"]}
@@ -111,6 +119,56 @@ def test_policy_rejects_invalid_weight(tmp_path):
 def test_policy_rejects_invalid_weight_out_of_range(tmp_path):
     broken = _raw_policy_dict()
     broken["weights"]["profiles"]["standard"]["financial_exposure_prevention"] = 5.0
+
+    broken_path = _write_policy(tmp_path, broken)
+
+    with pytest.raises(PolicyValidationError):
+        load_policy(broken_path)
+
+
+def test_policy_rejects_profile_selection_referencing_unknown_profile(tmp_path):
+    broken = _raw_policy_dict()
+    broken["profile_selection"]["rules"][0]["profile"] = "nonexistent_profile"
+
+    broken_path = _write_policy(tmp_path, broken)
+
+    with pytest.raises(PolicyValidationError, match="nonexistent_profile"):
+        load_policy(broken_path)
+
+
+def test_scoring_effect_vectors_cover_all_objectives():
+    policy = load_policy()
+    objective_names = set(policy["objectives"].keys())
+    scoring = policy["scoring"]
+
+    for table_name in ("action_effects", "strategy_effects"):
+        for key, vector in scoring[table_name].items():
+            assert set(vector.keys()) == objective_names, f"{table_name}.{key}"
+
+
+def test_policy_rejects_scoring_vector_with_missing_objective(tmp_path):
+    broken = _raw_policy_dict()
+    del broken["scoring"]["action_effects"]["RELEASE_PAYMENT"]["merchant_trust"]
+
+    broken_path = _write_policy(tmp_path, broken)
+
+    with pytest.raises(PolicyValidationError):
+        load_policy(broken_path)
+
+
+def test_policy_rejects_scoring_value_out_of_range(tmp_path):
+    broken = _raw_policy_dict()
+    broken["scoring"]["action_effects"]["RELEASE_PAYMENT"]["merchant_trust"] = 1.5
+
+    broken_path = _write_policy(tmp_path, broken)
+
+    with pytest.raises(PolicyValidationError):
+        load_policy(broken_path)
+
+
+def test_policy_rejects_invalid_confidence_min_weight(tmp_path):
+    broken = _raw_policy_dict()
+    broken["scoring"]["confidence"]["min_weight"] = 1.5
 
     broken_path = _write_policy(tmp_path, broken)
 

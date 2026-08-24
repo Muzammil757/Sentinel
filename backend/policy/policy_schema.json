@@ -8,6 +8,7 @@
     "policy",
     "objectives",
     "weights",
+    "scoring",
     "profile_selection",
     "hard_constraints",
     "authority",
@@ -51,6 +52,43 @@
       "required": ["profiles"],
       "properties": {
         "profiles": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": { "type": "number" }
+          }
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["method", "confidence", "action_effects", "strategy_effects"],
+      "properties": {
+        "method": { "type": "string", "minLength": 1 },
+        "impact_scale": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "confidence": {
+          "type": "object",
+          "required": ["method", "min_weight"],
+          "properties": {
+            "method": { "type": "string", "minLength": 1 },
+            "min_weight": { "type": "number" }
+          }
+        },
+        "action_effects": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": { "type": "number" }
+          }
+        },
+        "strategy_effects": {
           "type": "object",
           "minProperties": 1,
           "additionalProperties": {

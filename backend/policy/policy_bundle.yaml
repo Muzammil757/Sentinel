@@ -1,6 +1,6 @@
 policy:
   policy_id: "sentinel_demo_policy_v1"
-  version: "1.0.0"
+  version: "1.1.0"
   metadata:
     name: "Sentinel Demo Governance Policy"
     description: >
@@ -46,6 +46,37 @@ weights:
       compliance_risk_reduction: 0.15
       merchant_trust: 0.35
       operational_cost: 0.10
+
+scoring:
+  # Deterministic, policy-owned scoring data for the WEIGH layer. These are
+  # declared governance stances about categories of action -- not risk
+  # estimates derived from any agent's evidence. WEIGH must read these
+  # values rather than hard-coding them; changing them changes WEIGH's
+  # output with zero application-code changes.
+  method: weighted_linear_v1
+  impact_scale: [-1.0, 1.0]
+
+  confidence:
+    method: min_blend_v1
+    min_weight: 0.50
+
+  action_effects:
+    #                       fep     frr     crr      mt      oc
+    RELEASE_PAYMENT:      { financial_exposure_prevention: -0.80, fraud_risk_reduction: -0.60, compliance_risk_reduction: -0.30, merchant_trust:  0.70, operational_cost:  0.50 }
+    HOLD_RELATED_ACTIONS: { financial_exposure_prevention:  0.90, fraud_risk_reduction:  0.70, compliance_risk_reduction:  0.60, merchant_trust: -0.30, operational_cost: -0.20 }
+    CLOSE_CASE:            { financial_exposure_prevention:  0.10, fraud_risk_reduction:  0.00, compliance_risk_reduction:  0.30, merchant_trust:  0.20, operational_cost:  0.40 }
+    HOLD_ORDER:            { financial_exposure_prevention:  0.70, fraud_risk_reduction:  0.60, compliance_risk_reduction:  0.20, merchant_trust: -0.80, operational_cost: -0.20 }
+    REVIEW_ORDER:          { financial_exposure_prevention:  0.30, fraud_risk_reduction:  0.40, compliance_risk_reduction:  0.10, merchant_trust: -0.20, operational_cost: -0.50 }
+    ALLOW_ORDER:           { financial_exposure_prevention: -0.40, fraud_risk_reduction: -0.50, compliance_risk_reduction: -0.10, merchant_trust:  0.50, operational_cost:  0.40 }
+    WIN_BACK_OFFER:        { financial_exposure_prevention: -0.30, fraud_risk_reduction: -0.40, compliance_risk_reduction: -0.20, merchant_trust:  0.90, operational_cost:  0.30 }
+    RETENTION_MESSAGE:     { financial_exposure_prevention:  0.00, fraud_risk_reduction: -0.10, compliance_risk_reduction:  0.00, merchant_trust:  0.50, operational_cost:  0.20 }
+    NO_RETENTION_ACTION:   { financial_exposure_prevention:  0.00, fraud_risk_reduction:  0.00, compliance_risk_reduction:  0.00, merchant_trust: -0.20, operational_cost:  0.30 }
+
+  strategy_effects:
+    HOLD_BOTH_PENDING_REVIEW: { financial_exposure_prevention: 0.60, fraud_risk_reduction: 0.50, compliance_risk_reduction: 0.50, merchant_trust: -0.50, operational_cost: -0.90 }
+    NO_CONFLICT_PROCEED:      { financial_exposure_prevention: 0.00, fraud_risk_reduction: 0.00, compliance_risk_reduction: 0.00, merchant_trust:  0.00, operational_cost:  0.00 }
+    DEFER_TO_AGENT:           { financial_exposure_prevention: 0.00, fraud_risk_reduction: 0.00, compliance_risk_reduction: 0.00, merchant_trust:  0.00, operational_cost:  0.00 }
+    SUPPRESS_ACTION:          { financial_exposure_prevention: 0.00, fraud_risk_reduction: 0.00, compliance_risk_reduction: 0.00, merchant_trust:  0.00, operational_cost:  0.00 }
 
 profile_selection:
   # Deterministic first-match routing. Rules are evaluated in order; the

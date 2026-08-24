@@ -125,6 +125,53 @@ def _validate_weights(policy: dict) -> None:
             )
 
 
+def _validate_profile_selection(policy: dict) -> None:
+    profiles = policy["weights"]["profiles"]
+
+    for index, rule in enumerate(policy["profile_selection"]["rules"]):
+        profile_name = rule["profile"]
+        if profile_name not in profiles:
+            raise PolicyValidationError(
+                f"profile_selection.rules[{index}].profile = {profile_name!r} "
+                f"is not defined in weights.profiles; defined profiles are "
+                f"{sorted(profiles.keys())}"
+            )
+
+
+def _validate_scoring(policy: dict) -> None:
+    scoring = policy["scoring"]
+    objective_names = set(policy["objectives"].keys())
+
+    min_weight = scoring["confidence"]["min_weight"]
+    if isinstance(min_weight, bool) or not isinstance(min_weight, (int, float)) or not (0.0 <= min_weight <= 1.0):
+        raise PolicyValidationError(
+            f"scoring.confidence.min_weight must be a number between 0 and 1, "
+            f"got {min_weight!r}"
+        )
+
+    for table_name in ("action_effects", "strategy_effects"):
+        table = scoring[table_name]
+        for key, vector in table.items():
+            vector_keys = set(vector.keys())
+            if vector_keys != objective_names:
+                raise PolicyValidationError(
+                    f"scoring.{table_name}.{key} keys {sorted(vector_keys)} do not "
+                    f"match objectives {sorted(objective_names)}"
+                )
+
+            for objective_name, value in vector.items():
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    raise PolicyValidationError(
+                        f"scoring.{table_name}.{key}.{objective_name} must be "
+                        f"numeric, got {value!r}"
+                    )
+                if not (-1.0 <= value <= 1.0):
+                    raise PolicyValidationError(
+                        f"scoring.{table_name}.{key}.{objective_name} = {value} "
+                        f"is outside the allowed range [-1.0, 1.0]"
+                    )
+
+
 def _validate_hard_constraints(policy: dict) -> None:
     constraints = policy["hard_constraints"]
     ids = [constraint.get("id") for constraint in constraints]
@@ -225,6 +272,8 @@ def load_policy(path: Optional[Union[str, Path]] = None) -> dict:
     _validate_schema(policy)
     _validate_objectives(policy)
     _validate_weights(policy)
+    _validate_profile_selection(policy)
+    _validate_scoring(policy)
     _validate_hard_constraints(policy)
     _validate_authority(policy)
     _validate_ambiguity(policy)
