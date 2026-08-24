@@ -1,0 +1,178 @@
+policy:
+  policy_id: "sentinel_demo_policy_v1"
+  version: "1.0.0"
+  metadata:
+    name: "Sentinel Demo Governance Policy"
+    description: >
+      Deterministic policy bundle used to demonstrate Sentinel's governance
+      layer (objectives, weights, hard constraints, authority, and
+      escalation behavior) for the Razorpay Buildathon Open Track.
+    disclaimer: >
+      These are Sentinel demo policy values created for hackathon
+      demonstration purposes only. They do not represent Razorpay's actual
+      internal risk, fraud, or compliance policies, thresholds, or values.
+    created_date: "2026-08-24"
+    owner: "Sentinel project"
+
+objectives:
+  financial_exposure_prevention:
+    description: "Minimize direct financial loss from premature or incorrect payment/payout release."
+  fraud_risk_reduction:
+    description: "Minimize the risk of enabling or facilitating fraudulent activity."
+  compliance_risk_reduction:
+    description: "Minimize actions that could create regulatory or contractual compliance exposure."
+  merchant_trust:
+    description: "Preserve merchant relationship quality and avoid unnecessary friction."
+  operational_cost:
+    description: "Minimize unnecessary manual review and operational overhead."
+
+weights:
+  profiles:
+    standard:
+      financial_exposure_prevention: 0.30
+      fraud_risk_reduction: 0.25
+      compliance_risk_reduction: 0.20
+      merchant_trust: 0.15
+      operational_cost: 0.10
+    high_risk_merchant:
+      financial_exposure_prevention: 0.30
+      fraud_risk_reduction: 0.35
+      compliance_risk_reduction: 0.20
+      merchant_trust: 0.05
+      operational_cost: 0.10
+    trusted_merchant:
+      financial_exposure_prevention: 0.25
+      fraud_risk_reduction: 0.15
+      compliance_risk_reduction: 0.15
+      merchant_trust: 0.35
+      operational_cost: 0.10
+
+profile_selection:
+  # Deterministic first-match routing. Rules are evaluated in order; the
+  # first rule whose "when" key/value pairs all match the case context wins.
+  # "when" is plain declarative data (exact-match key/value pairs) -- it is
+  # never parsed or evaluated as code.
+  rules:
+    - when: { merchant_risk_tier: "high" }
+      profile: high_risk_merchant
+    - when: { merchant_trust_tier: "trusted" }
+      profile: trusted_merchant
+  default_profile: standard
+
+hard_constraints:
+  - id: HC_PAYOUT_DURING_CHARGEBACK
+    description: >
+      A payout must not be autonomously released while a related
+      chargeback/dispute is open.
+    enforcement: block
+  - id: HC_THIRDWATCH_HIGH_RISK_PAYOUT
+    description: >
+      A payout must not be autonomously released when Thirdwatch/RTO risk
+      signals classify the order as high risk.
+    enforcement: block
+  - id: HC_RETENTION_TO_FLAGGED_MERCHANT
+    description: >
+      A retention win-back action must not be autonomously sent to a
+      merchant flagged for fraud or compliance review.
+    enforcement: block
+  - id: HC_CONFIDENCE_FLOOR
+    description: >
+      No candidate may be autonomously selected when its originating
+      agent's confidence is below the configured floor.
+    parameters:
+      min_confidence: 0.60
+    enforcement: block
+  - id: HC_UNAUTHORIZED_ACTION
+    description: >
+      No action may be autonomously executed by an agent beyond its
+      configured authority limits.
+    enforcement: block
+
+authority:
+  agents:
+    payouts:
+      autonomous_actions: ["RELEASE_PAYMENT"]
+      max_autonomous_amount: 50000
+    dispute:
+      autonomous_actions: ["HOLD_RELATED_ACTIONS", "CLOSE_CASE"]
+      max_autonomous_amount: null
+    rto:
+      autonomous_actions: ["HOLD_ORDER", "REVIEW_ORDER"]
+      max_autonomous_amount: null
+    retention:
+      autonomous_actions: ["WIN_BACK_OFFER"]
+      max_autonomous_amount: 5000
+  actions_requiring_governance:
+    - RELEASE_PAYMENT
+    - WIN_BACK_OFFER
+  actions_requiring_escalation:
+    - HOLD_BOTH_PENDING_REVIEW
+
+escalation:
+  outcomes: [PROCEED, HOLD, ESCALATE, AMBIGUOUS]
+  thresholds:
+    proceed_min_score: 0.75
+    hold_max_score: 0.40
+  conditions:
+    proceed: >
+      Composite weighted objective score meets or exceeds proceed_min_score
+      and no hard constraint is violated.
+    hold: >
+      Composite weighted objective score falls at or below hold_max_score,
+      or a soft risk signal is present without a hard constraint violation.
+    escalate: >
+      A hard constraint is violated, agent authority is exceeded, or the
+      case matches an authority action requiring escalation.
+    ambiguous: >
+      The case matches one or more conditions defined in the ambiguity
+      section below.
+
+ambiguity:
+  near_tie_threshold: 0.05
+  insufficient_evidence:
+    min_supporting_signals: 1
+  low_confidence_threshold: 0.55
+  conflicting_objectives:
+    description: >
+      Two or more weighted objectives favor opposing candidates within
+      near_tie_threshold of each other.
+
+claude:
+  role: "Bounded reasoning support for permitted ambiguity cases only."
+  permitted_uses:
+    - "Explaining why an already-generated set of RESOLVE candidates is ambiguous."
+    - "Summarizing policy rationale for a human reviewer during escalation."
+  may_invent_candidates: false
+  may_bypass_hard_constraints: false
+  may_override_authority: false
+  may_directly_execute_actions: false
+  invocation_conditions:
+    - "Case is classified as AMBIGUOUS by the escalation layer."
+    - "No hard constraint has been violated."
+
+fallback:
+  # Deterministic behavior when Claude is unavailable, invalid, times out,
+  # or violates the allowed response schema. Always conservative -- never
+  # PROCEED.
+  on_claude_unavailable: HOLD_FOR_REVIEW
+  on_invalid_response: HOLD_FOR_REVIEW
+  on_timeout: HOLD_FOR_REVIEW
+  on_schema_violation: ESCALATE
+
+audit:
+  required_fields:
+    - policy_id
+    - policy_version
+    - policy_hash
+    - decision_id
+    - timestamp
+    - profile_selected
+    - objectives_considered
+    - weights_used
+    - hard_constraints_checked
+    - candidates_considered
+    - selected_candidate
+    - outcome
+    - rationale
+    - claude_invoked
+    - claude_output_used
