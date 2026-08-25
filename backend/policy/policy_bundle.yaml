@@ -144,6 +144,10 @@ escalation:
   thresholds:
     proceed_min_score: 0.75
     hold_max_score: 0.40
+    # Covers hold_max_score < score < proceed_min_score, which would
+    # otherwise have no rule. Must be HOLD or ESCALATE -- an undefined
+    # band may never auto-execute, so PROCEED is not a legal value here.
+    mid_band_outcome: HOLD
   conditions:
     proceed: >
       Composite weighted objective score meets or exceeds proceed_min_score
