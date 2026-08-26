@@ -19,7 +19,7 @@ prior insert. Mappers never invent or look up an id themselves -- they only
 shape data already fully determined by the pipeline and the caller.
 """
 
-from persistence.errors import PersistenceError
+from .errors import PersistenceError
 
 
 def map_agent_output(agent_name: str, payload: dict, role: str) -> dict:

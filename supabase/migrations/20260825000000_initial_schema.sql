@@ -243,8 +243,10 @@ create table execution_receipts (
     status text not null check (status in ('EXECUTED', 'REJECTED')),
     -- EXECUTOR's own back-reference block, kept whole so an auditor can
     -- read one receipt row without joining back to govern_results
-    -- (design §H.6).
-    authorization jsonb not null,
+    -- (design §H.6). Quoted because AUTHORIZATION is a reserved PostgreSQL
+    -- keyword; the stored/queried column name is still the plain lowercase
+    -- `authorization` EXECUTOR's receipt and persistence.mappers use.
+    "authorization" jsonb not null,
     -- Ordered ladder trail; audit value is the order and stopping point
     -- (design §H.6).
     authorization_checks jsonb not null,

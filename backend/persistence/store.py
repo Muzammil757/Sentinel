@@ -18,9 +18,9 @@ never constructs one itself, so it stays fully unit-testable without a live
 Supabase project.
 """
 
-from persistence import mappers
-from persistence.audit import map_audit_event, map_run_failed_event
-from persistence.errors import PersistenceError
+from . import mappers
+from .audit import map_audit_event, map_run_failed_event
+from .errors import PersistenceError
 
 
 def _first_row(response) -> dict:

@@ -17,7 +17,7 @@ Public surface:
     persistence.errors.PersistenceError  -- integrity failures (never decisions)
 """
 
-from persistence.errors import PersistenceError
-from persistence.store import PersistenceStore
+from .errors import PersistenceError
+from .store import PersistenceStore
 
 __all__ = ["PersistenceStore", "PersistenceError"]
