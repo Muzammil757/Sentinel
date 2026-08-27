@@ -1,9 +1,22 @@
 # Sentinel — Data Layer Design (Supabase / PostgreSQL)
 
-**Status:** Design only. Nothing in `backend/` was created or modified for this task. No migrations, no SQL, no SDKs.
-**Phase:** 3A (follows EXECUTOR, commit `5729314`)
-**Audience:** the engineer implementing the persistence adapter and, later, the API layer.
-**Rule for the implementer:** every architectural decision needed to build this layer is fixed below. If you hit a decision this document does not answer, stop and escalate rather than inventing one.
+**Status:** Implemented in the repository. The schema below exists as a migration file (`supabase/migrations/20260825000000_initial_schema.sql`); whether that migration has been applied to a live, provisioned Supabase project is not established by anything in this repository. The persistence adapter is built and tested (`backend/persistence/`), against an in-memory fake client, not a live database. Not yet wired into an orchestrator or API route — see "Implementation status" immediately below and §P.
+**Phase:** 3A originally (follows EXECUTOR, commit `5729314`); this revision documents the repository as it stands after the persistence layer was subsequently built.
+**Audience:** the engineer wiring the adapter into an orchestrator/API layer, and anyone auditing what the data layer actually does today.
+**Rule for the implementer:** every architectural decision needed to build this layer is fixed below. If you hit a decision this document does not answer, stop and escalate rather than inventing one. Where the schema or adapter code disagrees with this document, that is a bug in one of the two — flag it, do not silently trust the code over the spec or vice versa.
+
+---
+
+## Implementation status (read this first)
+
+This document originally specified the data layer *before* any of it existed (see the "Design only" status it used to carry). That is no longer the case, and this revision updates it to describe the repository as it actually is.
+
+- **What was designed vs. what exists now:** the schema, relationships, JSONB decisions, RLS direction, and audit model in §C–§O below are unchanged from the original design *and* are now the actual implementation — the migration and adapter were built to this spec, verified table-by-table and field-by-field against the current repository for this revision.
+- **What Supabase persistence functionality exists:** `backend/persistence/connection.py` provides a lazy Supabase client factory that reads `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from the environment and raises `SupabaseConfigError` (never a hard-coded default) if either is missing or the `supabase` package isn't installed.
+- **What database schema/migration exists:** `supabase/migrations/20260825000000_initial_schema.sql` creates all ten tables from §F, the indexes from §K, the check constraints from §K.3, and the RLS policies from §L — essentially verbatim, including inline comments citing this document's section numbers.
+- **What backend persistence code exists:** `backend/persistence/store.py` (`PersistenceStore`, one method per pipeline stage: `get_or_create_case`, `create_case_run`, `update_case_run_status`, `record_agent_outputs`, `record_conflict`, `record_candidates`, `record_candidate_scores`, `record_weigh_result`, `record_govern_result`, `record_execution_receipt`, `record_audit_event`, `record_run_failed`), `mappers.py` (pure stage-output → row mapping, no I/O), `audit.py` (the closed `stage`/`outcome` vocabulary), `errors.py` (`PersistenceError`). A full test suite (`backend/persistence/test_*.py`) exercises all of this against an in-memory fake client (`persistence/conftest.py::FakeSupabaseClient`) built from real pipeline runs, plus structural safety tests (`test_safety.py`) proving persistence source never imports a decision layer (`resolve`, `weigh`, `govern`, `executor`, `conflict_matrix`) and defines no scoring/ranking/decision function.
+- **What remains to be implemented:** nothing calls `PersistenceStore` outside of tests. `backend/main.py` is still the placeholder FastAPI app with no routes. §P's step 6 (wrapping one run's writes in a single Postgres transaction) is not implemented — each `PersistenceStore` method is an independent insert. No live Supabase project has been exercised from this repository; only the migration file and adapter code exist locally, and `connection.get_client()` correctly fails closed with no credentials configured, which is this environment's actual state.
+- **Mismatch with the original design text, now corrected:** the original §B and §Q described `backend/database/` (a SQLite/SQLAlchemy scaffold) as present-but-dead code awaiting an approval decision to remove. **That module has since been deleted from the repository entirely** — confirmed absent in this revision's inspection — not merely deprecated. `backend/main.py`'s own docstring documents the retirement. §B and §Q below are updated accordingly rather than left describing a file that no longer exists.
 
 ---
 
@@ -60,7 +73,7 @@ Two things verified directly in code, because they change the schema:
 1. **`profile.profile_name`, not `profile.selected`.** `weigh_layer_design.md`'s own worked example uses `"selected"`, but `weigh/schema.py` lists `"selected"` in `FORBIDDEN_OUTPUT_KEYS`, and `weigh/profile.py` emits `"profile_name"`. `govern_layer_design.md` §0 documents this exact trap. This document uses `profile_name` throughout — the design docs are aspirational where they conflict with the code; the code is truth.
 2. **The pipeline today is strictly pairwise.** `conflict_matrix.integration.evaluate_agent_actions` takes exactly two agent payloads (`action_a`, `action_b`); RESOLVE and WEIGH consume exactly one conflict per run. `govern/conftest.py`'s `no_conflict_release_case` shows a third agent (`rto`) can additionally ride along in `agent_actions` as evidence for a constraint check, without being a party to the conflict itself. The schema below reflects this: one `conflicts` row per run, `agent_outputs` rows tagged by role.
 
-No frontend and no Supabase/Postgres code exist anywhere in the repository today. The only persistence in the repo is `backend/database/` — a SQLite/SQLAlchemy scaffold — addressed in §Q.
+No frontend exists yet. Supabase/Postgres code now exists: the schema migration at `supabase/migrations/20260825000000_initial_schema.sql` and the persistence adapter at `backend/persistence/` (see "Implementation status" above and §P). `backend/database/` — the SQLite/SQLAlchemy scaffold earlier revisions of this document addressed in §Q — has since been removed from the repository entirely; it is not present today.
 
 ---
 
@@ -580,30 +593,34 @@ Every clause in that paragraph traces to a named column or JSONB field in §I.3 
 
 ---
 
-## P. Supabase implementation plan (not built in this phase)
+## P. Implementation status
 
-1. Create the Supabase project; enable the `pgcrypto` extension for `gen_random_uuid()`.
-2. Write the ten `CREATE TABLE` statements per §F, in dependency order (`cases` → `case_runs` → the rest).
-3. Add the indexes and check constraints from §K.
-4. Enable RLS on all ten tables per §L; write the service-role insert policy and the authenticated select policy.
-5. Write a thin Python adapter (`backend/persistence/` or similar — **not built in this task**) with one function per pipeline stage (`record_case_run`, `record_agent_outputs`, `record_conflict`, `record_candidates`, `record_weigh_result`, `record_govern_result`, `record_execution_receipt`, `record_audit_event`), each taking the exact dict the corresponding layer already returns and mapping it onto the columns in §F. No transformation logic beyond field selection — if a function needs to compute something the pipeline didn't already hand it, that is a sign the schema is wrong, not that the adapter needs to get smarter.
-6. Wrap the whole per-run sequence in one Postgres transaction so a failure partway through (e.g., GOVERN raises) leaves the `RUN_FAILED` audit event as the only new fact, never a half-written `govern_results` row.
-7. Wire the FastAPI layer (`backend/main.py`) to call the adapter after each stage, and add read endpoints backed by the queries in §I.2 and §M.
+What was originally a plan is now a status report against the repository as inspected for this revision.
 
-None of this is implemented as part of this document.
+1. **Done.** `supabase/migrations/20260825000000_initial_schema.sql` enables the `pgcrypto` extension (`create extension if not exists pgcrypto;`) for `gen_random_uuid()`. Whether this migration has actually been *applied* to a live, provisioned Supabase project is not something this repository can show either way — only the migration file's content is verifiable from here.
+2. **Done.** All ten `CREATE TABLE` statements from §F exist in that migration, in the specified dependency order (`cases` → `case_runs` → the rest).
+3. **Done.** The indexes and check constraints from §K are all present in the migration.
+4. **Done.** RLS is enabled on all ten tables per §L, with a `service_role` insert policy and an `authenticated` select policy on each — no `UPDATE`/`DELETE` policy exists for any role.
+5. **Done.** `backend/persistence/store.py`'s `PersistenceStore` provides one method per pipeline stage, and `backend/persistence/mappers.py` does the field mapping with no transformation beyond field selection — exactly the rule this step originally specified. Method names differ slightly from the ones sketched here (`create_case_run` + `get_or_create_case` instead of a single `record_case_run`, plus `record_candidate_scores` and `record_run_failed` which weren't enumerated above), but the shape and the "never compute what the pipeline didn't already hand you" discipline are the same, and are enforced by `backend/persistence/test_safety.py`'s structural tests (no import of a decision layer, no function named like a scoring/ranking/decision operation).
+6. **Not done.** No code wraps a run's full write sequence in one Postgres transaction. Each `PersistenceStore` method call is an independent insert; a failure partway through a run (e.g. GOVERN raises) is *recorded* via `record_run_failed` (§I.1), but nothing rolls back or atomically groups the inserts that did succeed before the failure. This remains open work.
+7. **Not done.** `backend/main.py` is still the placeholder FastAPI app described in its own docstring, with no routes. Nothing in the repository calls `PersistenceStore` outside of `backend/persistence/test_*.py`. There is no orchestrator tying RESOLVE → WEIGH → GOVERN → EXECUTOR → persistence together end-to-end, and no read endpoints backed by the §I.2/§M queries.
+
+In short: the schema (steps 1–4) and the write-side adapter (step 5) are built and tested against a fake client; the transactional guarantee (step 6) and the API/orchestration wiring (step 7) are not.
 
 ---
 
-## Q. Open questions / decisions requiring approval
+## Q. Open questions / decisions — status
 
-1. **The existing `backend/database/models.py` is superseded scaffolding, not a base to build on.** It defines `AgentAction`, `GovernanceDecision`, and `EvalCase` tables — but grepping the codebase shows **none of them is ever written to or read from anywhere outside `models.py` itself**. Their shapes predate WEIGH/GOVERN/EXECUTOR entirely: `GovernanceDecision` has `scenario`, `action`, `confidence`, `reasoning_text`, `evidence_ids`, `human_approval_required`, `safety_override_applied`, `final_outcome` — none of which map onto the real `govern_output` schema (no `policy_hash`, no `decision_id`, no `candidates`, no `outcome ∈ {PROCEED, HOLD, ESCALATE, AMBIGUOUS}`). **Recommendation (needs your approval): treat these three tables as dead scaffolding to be removed when the real persistence layer is implemented, not migrated.** The other eight models in that file (`Vendor`, `Payment`, `Dispute`, `Order`, `Customer`, `Subscription`, `RTOFlag`, `SupportNote`) are a *different* concern — mock world-state/reference data that a real (non-mock) agent implementation might eventually read from — and are out of scope for this design either way. Not touched; flagged only.
-2. **The project's only persistence today is SQLite via SQLAlchemy** (`backend/database/connection.py`, `DATABASE_URL = "sqlite:///./sentinel.db"`), not Postgres. Moving to Supabase is a new dependency and connection string, not a migration of existing data — there is no data in the SQLite file worth migrating (confirmed: nothing writes to it). Needs approval before any implementation phase touches `requirements.txt` or adds a Supabase client.
-3. **`case_runs.status` denormalization (§F.2.1) is a judgment call**, not something the brief mandates. The alternative is a view (`CREATE VIEW case_summary AS SELECT case_runs.*, govern_results.outcome AS status FROM case_runs LEFT JOIN govern_results ...`) instead of a stored column, trading one denormalized write for a join on every case-list read. Given a buildathon's low write volume and the judge-facing UI's read-heavy pattern, the stored column is recommended, but this is worth confirming rather than assuming.
-4. **`permission_evaluation` and `authorization`/`authorization_checks` are left as JSONB rather than normalized further** (§H.5, §H.6). If the UI later needs to render a *per-candidate* permission table (not just the winning candidate's), a `govern_permission_evaluations` table keyed by `(govern_result_id, candidate_id)` would be a clean additive change — flagged as a stretch option, not built now, because no UI requirement in §M currently asks for it.
-5. **No `entity_type`-specific tables were created** (e.g., a `order_vendor_cases` vs `customer_cases` split) even though `entity_type` currently takes exactly two values. The single `case_runs.entity_type text` column is deliberately generic — RESOLVE's rule table (`resolve/rules.py`) is the only place that would need to grow if a third entity type appeared, and the schema should not need to change in step with it.
+All five items below were open at design time. This revision checked each against the current repository: all five were resolved, and every one was resolved **in favor of the recommendation** this document originally made.
+
+1. **Resolved — `backend/database/` is gone, not just flagged as dead.** The original concern was whether `backend/database/models.py` (defining `AgentAction`, `GovernanceDecision`, `EvalCase`, plus eight unrelated mock world-state models — `Vendor`, `Payment`, `Dispute`, `Order`, `Customer`, `Subscription`, `RTOFlag`, `SupportNote`) was scaffolding to build on or dead code to remove, since none of the three decision-shaped tables were ever written to or read from anywhere, and their shapes predated WEIGH/GOVERN/EXECUTOR (no `policy_hash`, no `decision_id`, no `candidates`, no `outcome ∈ {PROCEED, HOLD, ESCALATE, AMBIGUOUS}`). As inspected for this revision, **`backend/database/` no longer exists in the repository at all** — confirmed absent, not merely present-and-unused. `backend/main.py`'s docstring documents this explicitly: *"`backend/database/` (SQLite/SQLAlchemy) was retired as dead scaffolding ... This file no longer imports it."* Consistent with the original recommendation, nothing from it was migrated.
+2. **Resolved — the project's persistence is now Supabase/Postgres, not SQLite.** `backend/requirements.txt` lists `supabase==2.31.0`; `backend/persistence/connection.py` builds a live client from `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` (no hard-coded credential or default). No SQLite file, `DATABASE_URL`, or SQLAlchemy dependency remains anywhere in the repository.
+3. **Resolved as recommended — `case_runs.status` is a stored column, not a view.** The migration defines it as `status text not null` on `case_runs` (§F.2.1), written once by the same process that writes `govern_results`, exactly as this document specified rather than as a `CREATE VIEW`.
+4. **Resolved as recommended — `permission_evaluation` and `authorization`/`authorization_checks` remain JSONB.** No `govern_permission_evaluations` (or equivalent) normalized table exists in the migration. Still flagged as a legitimate future stretch option if a UI requirement for per-candidate permission tables ever appears in §M — nothing currently asks for it.
+5. **Resolved as recommended — no `entity_type`-specific tables exist.** `case_runs.entity_type` is a single generic `text` column in the migration, not split by entity type, matching the original reasoning that `resolve/rules.py` is the only place that should need to grow if a third entity type appeared.
 
 ---
 
 ## Final verification
 
-`git status` after writing this document shows exactly one new file: `docs/data_layer_design.md`. No other file in the repository was created, modified, or deleted. Nothing was committed.
+This repository is a Git repository, with `origin` set to `https://github.com/Muzammil757/Sentinel.git` and history on branch `master`. `git status` and `git diff -- docs/data_layer_design.md` were run after writing this revision: `docs/data_layer_design.md` is the only file shown as modified; nothing under `backend/`, `supabase/`, or elsewhere in the repository is modified. Nothing was staged (`git add`), committed, or pushed as part of this task.
