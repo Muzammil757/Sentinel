@@ -6,6 +6,21 @@
 
 const API_BASE = "/api";
 
+// Known historical connectivity-verification artifacts, not demo data --
+// created directly against PersistenceStore outside the API by an earlier
+// verification pass, before the Scenario Lab or this UI existed. Named
+// explicitly by their stable external_case_id (never an internal UUID,
+// which is environment-specific) rather than by a naming-convention guess
+// (e.g. "doesn't start with scenario-"), so no legitimate case is ever
+// excluded by accident. This hides them from the judge-facing case list
+// only -- GET /api/cases itself stays a complete, truthful read of every
+// persisted case; nothing in Supabase is touched, updated, or deleted.
+const HIDDEN_EXTERNAL_CASE_IDS = new Set([
+  "sentinel-live-verify-001",
+  "sentinel-live-verify-rejected-001",
+  "sentinel-live-verify-failed-001",
+]);
+
 const state = {
   cases: [],
   scenarios: [],
@@ -194,11 +209,15 @@ async function loadCases() {
     renderErrorPanel(container, err);
     return;
   }
-  if (state.cases.length === 0) {
+  // Presentation-only filter: GET /api/cases above already returned every
+  // persisted case, untouched -- this only decides what the judge-facing
+  // list renders.
+  const visibleCases = state.cases.filter((c) => !HIDDEN_EXTERNAL_CASE_IDS.has(c.external_case_id));
+  if (visibleCases.length === 0) {
     container.innerHTML = '<p class="muted">No cases yet -- run a demo scenario or submit one.</p>';
     return;
   }
-  container.innerHTML = state.cases
+  container.innerHTML = visibleCases
     .map((c) => {
       const title = esc(c.external_case_id || c.case_id);
       const selected = c.case_id === state.selectedCaseId ? " case-item--active" : "";

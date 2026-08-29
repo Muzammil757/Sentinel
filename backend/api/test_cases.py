@@ -7,6 +7,21 @@ def test_list_cases_empty_initially(api_client):
     assert response.json() == []
 
 
+def test_get_cases_api_returns_every_persisted_case_regardless_of_external_id(api_client):
+    # GET /api/cases stays a complete, truthful persistence read. Any
+    # judge-facing filtering of known historical/verification artifacts is a
+    # frontend presentation concern (frontend/app.js's HIDDEN_EXTERNAL_CASE_IDS)
+    # and must never happen at this API layer -- a case named exactly like a
+    # known verification artifact still has to come back from this endpoint.
+    api_client.post(
+        "/api/cases/sentinel-live-verify-001/run",
+        json=PAYOUT_VS_DISPUTE_RUN_BODY,
+    )
+
+    external_ids = {c["external_case_id"] for c in api_client.get("/api/cases").json()}
+    assert "sentinel-live-verify-001" in external_ids
+
+
 def test_get_nonexistent_case_returns_404_with_typed_error(api_client):
     response = api_client.get("/api/cases/does-not-exist")
     assert response.status_code == 404
