@@ -11,6 +11,7 @@ find it again, and can I prove nothing was altered after the fact.
 Public surface:
 
     persistence.store.PersistenceStore   -- one method per pipeline stage
+    persistence.reader.CaseReader        -- read-model queries for the API layer
     persistence.mappers                  -- pure stage-output -> row mapping
     persistence.connection.get_client    -- lazy Supabase client factory
     persistence.audit                    -- audit_events stage/outcome vocabulary
@@ -18,6 +19,7 @@ Public surface:
 """
 
 from .errors import PersistenceError
+from .reader import CaseReader
 from .store import PersistenceStore
 
-__all__ = ["PersistenceStore", "PersistenceError"]
+__all__ = ["PersistenceStore", "CaseReader", "PersistenceError"]

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sentinel</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">S</span>
+        <div>
+          <h1>Sentinel</h1>
+          <p class="tagline">Multi-agent conflict governance -- decision pipeline demo</p>
+        </div>
+      </div>
+      <div id="health" class="health health--unknown">checking backend&hellip;</div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-section-header">
+            <h2>Cases</h2>
+            <button id="refresh-cases" class="btn btn--ghost" title="Refresh case list">&#8635;</button>
+          </div>
+          <div id="case-list" class="case-list">
+            <p class="muted">Loading cases&hellip;</p>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <button id="open-new-case" class="btn btn--primary btn--block">+ New case</button>
+        </div>
+
+        <div class="sidebar-section">
+          <h2>Quick demo scenarios</h2>
+          <p class="muted small">
+            Deterministic fixtures run through the real pipeline -- no external
+            calls, no repeated case creation. This is Sentinel's existing
+            Scenario Lab fallback/demo mode.
+          </p>
+          <div id="scenario-list" class="scenario-list">
+            <p class="muted">Loading scenarios&hellip;</p>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section id="new-case-panel" class="panel new-case-panel hidden">
+          <div class="panel-header">
+            <h2>Submit a new case</h2>
+            <button id="close-new-case" class="btn btn--ghost">&times; close</button>
+          </div>
+          <form id="new-case-form">
+            <div class="field-row">
+              <label>
+                External case ID
+                <input type="text" name="external_case_id" placeholder="auto-generated if blank" />
+              </label>
+              <label>
+                Entity type
+                <select name="entity_type" required>
+                  <option value="order_vendor">order_vendor</option>
+                  <option value="customer">customer</option>
+                </select>
+              </label>
+              <label>
+                Merchant / customer id (case_context, optional)
+                <input type="text" name="context_id" placeholder="mrch_001" />
+              </label>
+            </div>
+
+            <div class="agent-pair">
+              <fieldset class="agent-fieldset" data-role="agent_a">
+                <legend>Agent A</legend>
+                <div class="agent-fields"></div>
+              </fieldset>
+              <div class="vs">VS</div>
+              <fieldset class="agent-fieldset" data-role="agent_b">
+                <legend>Agent B</legend>
+                <div class="agent-fields"></div>
+              </fieldset>
+            </div>
+
+            <div id="new-case-error" class="error-box hidden"></div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary">Run case through Sentinel</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="empty-state" class="panel empty-state">
+          <p>Select a case on the left, run a quick demo scenario, or submit a new case to see Sentinel's full decision trail.</p>
+        </section>
+
+        <section id="case-detail" class="case-detail hidden">
+          <div class="panel case-overview" id="case-overview"></div>
+
+          <nav class="tabs" id="tabs">
+            <button class="tab active" data-tab="agents">Agents &amp; Conflict</button>
+            <button class="tab" data-tab="resolve">Resolve</button>
+            <button class="tab" data-tab="weigh">Weigh</button>
+            <button class="tab" data-tab="govern">Govern</button>
+            <button class="tab" data-tab="executor">Executor</button>
+            <button class="tab" data-tab="audit">Audit timeline</button>
+            <button class="tab" data-tab="history">Run history</button>
+          </nav>
+
+          <div class="tab-panels">
+            <section class="tab-panel active panel" data-tab="agents" id="panel-agents"></section>
+            <section class="tab-panel panel" data-tab="resolve" id="panel-resolve"></section>
+            <section class="tab-panel panel" data-tab="weigh" id="panel-weigh"></section>
+            <section class="tab-panel panel" data-tab="govern" id="panel-govern"></section>
+            <section class="tab-panel panel" data-tab="executor" id="panel-executor"></section>
+            <section class="tab-panel panel" data-tab="audit" id="panel-audit"></section>
+            <section class="tab-panel panel" data-tab="history" id="panel-history"></section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="agent_fields.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

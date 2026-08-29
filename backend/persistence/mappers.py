@@ -267,6 +267,23 @@ def map_case_run(
     }
 
 
+def map_human_review(
+    action: str, reviewer: str | None, reason: str | None, case_run_status_at_review: str
+) -> dict:
+    """
+    A human reviewer's annotation (design gap identified for the API layer --
+    no table for this existed before). Pure annotation: never a field that
+    feeds back into GOVERN's outcome or execution_authorized.
+    """
+
+    return {
+        "action": action,
+        "reviewer": reviewer,
+        "reason": reason,
+        "case_run_status_at_review": case_run_status_at_review,
+    }
+
+
 def candidate_row_id_map(candidate_rows: list) -> dict:
     """{RESOLVE's candidate_id: database row id}, built from the rows
     record_candidates already inserted -- the link candidate_scores and

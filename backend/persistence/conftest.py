@@ -10,6 +10,7 @@ there is no live Supabase/Postgres project available in this environment
 """
 
 import copy
+import itertools
 import uuid
 
 from conflict_matrix.integration import evaluate_agent_actions
@@ -74,9 +75,10 @@ class _InsertResult:
 
 
 class _Table:
-    def __init__(self, all_tables, name):
+    def __init__(self, all_tables, name, sequence):
         self._all_tables = all_tables
         self._name = name
+        self._sequence = sequence
 
     def select(self, *_columns):
         return _SelectQuery(self._all_tables[self._name])
@@ -87,6 +89,16 @@ class _Table:
         for row in payload:
             record = copy.deepcopy(row)
             record.setdefault("id", str(uuid.uuid4()))
+            # Real Postgres timestamps every row with a DB-side `now()`
+            # default on both `created_at` and `occurred_at` columns; this
+            # fake has no clock, so it stands in a strictly-increasing
+            # counter-derived timestamp instead -- deterministic (no
+            # same-millisecond ties across a fast test run) and sufficient
+            # for anything that orders rows chronologically, e.g.
+            # persistence.reader.CaseReader.
+            stamp = f"2024-01-01T00:00:00.{next(self._sequence):09d}+00:00"
+            record.setdefault("created_at", stamp)
+            record.setdefault("occurred_at", stamp)
             self._all_tables[self._name].append(record)
             inserted.append(copy.deepcopy(record))
         return _InsertResult(inserted)
@@ -106,10 +118,11 @@ class FakeSupabaseClient:
 
     def __init__(self):
         self._tables = {}
+        self._sequence = itertools.count()
 
     def table(self, name):
         self._tables.setdefault(name, [])
-        return _Table(self._tables, name)
+        return _Table(self._tables, name, self._sequence)
 
     def rows(self, name):
         return copy.deepcopy(self._tables.get(name, []))

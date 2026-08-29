@@ -265,6 +265,28 @@ def test_record_run_failed_carries_error_detail():
     assert row["detail"]["error_message"] == "bad policy"
 
 
+# --- human review -------------------------------------------------------------
+
+
+def test_record_human_review_is_linked_to_case_run():
+    client = FakeSupabaseClient()
+    store = PersistenceStore(client)
+    row = store.record_human_review("case-run-1", "approve", "reviewer-1", "looks right", "PROCEED")
+    assert row["case_run_id"] == "case-run-1"
+    assert row["action"] == "approve"
+    assert row["reviewer"] == "reviewer-1"
+    assert row["case_run_status_at_review"] == "PROCEED"
+
+
+def test_record_human_review_never_touches_govern_or_execution_receipt_tables():
+    client = FakeSupabaseClient()
+    store = PersistenceStore(client)
+    store.record_human_review("case-run-1", "reject", None, "insufficient evidence", "HOLD")
+    assert client.rows("govern_results") == []
+    assert client.rows("execution_receipts") == []
+    assert client.rows("case_runs") == []
+
+
 # --- end-to-end reconstruction ------------------------------------------------
 
 

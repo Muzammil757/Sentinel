@@ -178,6 +178,30 @@ class PersistenceStore:
         response = self._client.table("audit_events").insert(row).execute()
         return _first_row(response)
 
+    # -- human review (API-layer addition; see supabase/migrations/
+    # 20260826000000_human_reviews.sql) -------------------------------------
+
+    def record_human_review(
+        self,
+        case_run_id: str,
+        action: str,
+        reviewer: str | None,
+        reason: str | None,
+        case_run_status_at_review: str,
+    ) -> dict:
+        """
+        Records a reviewer's annotation only. Never mutates case_runs,
+        govern_results, or execution_receipts, and never triggers EXECUTOR --
+        GOVERN's decision remains the sole authorization record.
+        """
+
+        row = {
+            **mappers.map_human_review(action, reviewer, reason, case_run_status_at_review),
+            "case_run_id": case_run_id,
+        }
+        response = self._client.table("human_reviews").insert(row).execute()
+        return _first_row(response)
+
 
 def candidate_row_id_map(candidate_rows: list) -> dict:
     """Re-exported for callers that persisted candidates and now need the

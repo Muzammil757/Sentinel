@@ -259,3 +259,25 @@ def test_candidate_row_id_map_builds_from_inserted_rows():
         "defer_to_agent-1": "uuid-1",
         "hold_both_pending_review-2": "uuid-2",
     }
+
+
+# --- human_reviews ------------------------------------------------------------
+
+
+def test_map_human_review_is_pure_annotation():
+    row = mappers.map_human_review("approve", "reviewer-1", "looks right", "PROCEED")
+    assert row == {
+        "action": "approve",
+        "reviewer": "reviewer-1",
+        "reason": "looks right",
+        "case_run_status_at_review": "PROCEED",
+    }
+    # No key here can feed back into execution_authorized or an outcome.
+    assert "execution_authorized" not in row
+    assert "outcome" not in row
+
+
+def test_map_human_review_allows_null_reviewer_and_reason():
+    row = mappers.map_human_review("request_more_evidence", None, None, "AMBIGUOUS")
+    assert row["reviewer"] is None
+    assert row["reason"] is None
