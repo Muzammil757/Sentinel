@@ -1,0 +1,41 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Navigation — sidebar and tabs" subtitle="Console sidebar with counts, underline tabs" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{background:var(--bg-surface);padding:16px;font:var(--type-body)}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.col{display:flex;flex-direction:column;gap:12px}.lbl{font:var(--type-label);letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--text-tertiary)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const NS = window.SentinelDesignSystem_8a81b0;
+const { SideNav, Tabs } = NS;
+function Card() {
+  const [tab, setTab] = React.useState('govern');
+  const [view, setView] = React.useState('cases');
+  return (
+    <div style={{ display: 'flex', gap: 16, height: 260, border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-6)', overflow: 'hidden', background: 'var(--bg-app)' }}>
+      <SideNav value={view} onSelect={setView} sections={[
+        { label: 'Operations', items: [
+          { value: 'cases', label: 'Cases', icon: 'inbox', count: 4 },
+          { value: 'review', label: 'Human review', icon: 'message-square', count: 2, attention: true },
+          { value: 'exec', label: 'Execution', icon: 'terminal' },
+        ]},
+        { label: 'Assurance', items: [
+          { value: 'audit', label: 'Audit trail', icon: 'scroll-text' },
+          { value: 'rel', label: 'Reliability', icon: 'activity' },
+          { value: 'policy', label: 'Policies', icon: 'git-branch', count: 18 },
+        ]},
+      ]} />
+      <div style={{ flex: 1, padding: '14px 16px 0 0' }}>
+        <Tabs value={tab} onChange={setTab} items={[
+          { value: 'weigh', label: 'WEIGH', count: 3 },
+          { value: 'govern', label: 'GOVERN' },
+          { value: 'exec', label: 'Execution' },
+          { value: 'audit', label: 'Audit', count: 12 },
+        ]} />
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card />);
+</script></body></html>

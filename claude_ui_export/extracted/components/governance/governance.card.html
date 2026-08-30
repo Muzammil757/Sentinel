@@ -1,0 +1,48 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Governance — pipeline, decision, candidates" subtitle="Pipeline track, decision summary, candidates, conflict, audit" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{background:var(--bg-surface);padding:16px;font:var(--type-body)}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.col{display:flex;flex-direction:column;gap:12px}.lbl{font:var(--type-label);letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--text-tertiary)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const NS = window.SentinelDesignSystem_8a81b0;
+const { PipelineTrack, DecisionSummary, CandidateOption, AgentDisagreement, AuditTrail, CaseRow, Panel } = NS;
+function Card() {
+  return (
+    <div className="col">
+      <PipelineTrack stages={[
+        { label: 'Intake', state: 'done', detail: '14:02:11' },
+        { label: 'Weigh', state: 'done', detail: '3 candidates' },
+        { label: 'Govern', state: 'blocked', detail: 'policy payout-v4' },
+        { label: 'Execution', state: 'skipped', detail: 'not reached' },
+        { label: 'Review', state: 'active', detail: 'annotation open' },
+      ]} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <DecisionSummary outcome="blocked" headline="Execution blocked before any external call." policy="payout-v4" decidedAt="14:02:14 IST"
+          reasons={[{ label: 'Trigger', value: 'Amount exceeds vendor ceiling by 41%.' }, { label: 'Conflict', value: 'risk-agent and settlement-agent disagreed on reversibility.' }]} />
+        <AgentDisagreement subject="Reversibility of the payout within SLA" resolvedBy="GOVERN · policy payout-v4"
+          positions={[{ agent: 'risk-agent v7', position: 'Hold', basis: 'Vendor ceiling breached.', confidence: '0.82' },
+                      { agent: 'settlement-agent v3', position: 'Release', basis: 'Reversal window open 6h.', confidence: '0.61' }]} />
+      </div>
+      <Panel padded={false} label="WEIGH" title="Candidate options">
+        <CandidateOption rank="01" name="Hold payout for manual settlement" proposedBy="risk-agent v7" score="0.82" verdict="chosen" rationale="Lowest exposure; reversible within SLA." />
+        <CandidateOption rank="02" name="Release with partial amount" proposedBy="settlement-agent v3" score="0.61" verdict="rejected" rationale="Breaches vendor ceiling policy." />
+        <CandidateOption rank="03" name="Defer 6h and re-evaluate" proposedBy="risk-agent v7" score="0.44" verdict="considered" />
+      </Panel>
+      <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-4)', overflow: 'hidden' }}>
+        <CaseRow id="CASE-2041" title="Vendor payout above ceiling" status="blocked" agentConflict surface="Payouts API" amount="₹18,40,000" time="14:02" selected />
+        <CaseRow id="CASE-2042" title="Refund batch retry" status="allowed" surface="Refunds API" amount="₹42,900" time="13:58" />
+      </div>
+      <AuditTrail entries={[
+        { time: '14:02:11.402', actor: 'intake', actorKind: 'system', message: 'Case opened from payout webhook' },
+        { time: '14:02:13.907', actor: 'weigh', actorKind: 'agent', message: 'Evaluated 3 candidate options', detail: 'conflict detected' },
+        { time: '14:02:14.118', actor: 'govern', actorKind: 'govern', message: 'Blocked', detail: 'policy payout-v4 · rule ceiling.vendor' },
+        { time: '14:04:02.220', actor: 'reviewer', actorKind: 'reviewer', message: 'Annotation recorded', detail: 'no authority change' },
+      ]} />
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card />);
+</script></body></html>

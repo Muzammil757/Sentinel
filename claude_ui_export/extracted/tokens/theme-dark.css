@@ -1,0 +1,36 @@
+.sentinel-dark{
+/* Control-plane foundation: neutral graphite, near-monochrome until state requires colour */
+--bg-app:#0B0B0D;--bg-surface:#0F1012;--bg-raised:#15161A;--bg-inset:#0C0C0E;
+--bg-hover:rgba(255,255,255,.035);--bg-active:rgba(255,255,255,.065);--bg-selected:rgba(255,255,255,.05);
+--bg-console:#0C0C0E;--bg-console-raised:#131417;
+
+--border-hairline:rgba(255,255,255,.05);--border-subtle:rgba(255,255,255,.075);
+--border-strong:rgba(255,255,255,.13);--border-emphasis:rgba(255,255,255,.26);
+--border-console:rgba(255,255,255,.07);
+
+--text-primary:#E9E7E3;--text-secondary:#98978F;--text-tertiary:#6A6A66;
+--text-inverse:#E9E7E3;--text-inverse-secondary:rgba(233,231,227,.52);
+--text-accent:#A9B4C6;--text-link:#A9B4C6;--text-link-hover:#C6CEDB;
+
+/* Accent is a muted steel — focus, active rule, selection. Never a fill on large areas. */
+--accent:#7F8CA3;--accent-hover:#96A2B6;--accent-press:#6B7789;
+--accent-tint:rgba(127,140,163,.13);--focus-ring:rgba(127,140,163,.30);
+--teal:#6E9E96; /* @kind color */
+--teal-dim:rgba(110,158,150,.12); /* @kind color */
+
+--status-allowed-fg:#7FA98F;--status-allowed-bg:rgba(127,169,143,.10);--status-allowed-dot:#7FA98F;
+--status-escalated-fg:#C39A57;--status-escalated-bg:rgba(195,154,87,.10);--status-escalated-dot:#C39A57;
+--status-blocked-fg:#C87A6C;--status-blocked-bg:rgba(200,122,108,.10);--status-blocked-dot:#C87A6C;
+--status-failed-fg:#9A9A96;--status-failed-bg:rgba(255,255,255,.05);--status-failed-dot:#8A8A86;
+--status-conflict-fg:#9A8FB0;--status-conflict-bg:rgba(154,143,176,.10);--status-conflict-dot:#9A8FB0;
+--status-pending-fg:#7A7A76;--status-pending-bg:rgba(255,255,255,.04);--status-pending-dot:#55555C;
+
+--shadow-1:none;
+--shadow-2:0 10px 30px -12px rgba(0,0,0,.8);
+--shadow-popover:0 28px 64px -20px rgba(0,0,0,.85);
+--overlay-scrim:rgba(6,6,7,.7);
+--glow-accent:0 0 0 1px rgba(127,140,163,.35); /* @kind shadow */
+}
+.sentinel-dark{background:var(--bg-app);color:var(--text-primary)}
+.sentinel-dark ::selection{background:rgba(127,140,163,.28)}
+.sentinel-dark a{color:var(--text-link)}

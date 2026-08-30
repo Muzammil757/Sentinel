@@ -1,0 +1,23 @@
+<!-- @dsCard group="Components" viewport="700x200" name="Pipeline — causal chain" subtitle="AGENTS → CONFLICT → RESOLVE → WEIGH → GOVERN → EXECUTOR" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:16px;background:#0A0C11}.row{display:flex;flex-direction:column;gap:16px}</style>
+</head><body class="sentinel-dark"><div id="root"></div>
+<script type="text/babel">
+const { CausalChain } = window.SentinelDesignSystem_8a81b0;
+function Card() {
+  return (
+    <div className="row">
+      <CausalChain states={{ agents:'passed', conflict:'clear', resolve:'passed', weigh:'passed', govern:'passed', executor:'passed' }} detail="executed · 412ms" />
+      <CausalChain states={{ agents:'passed', conflict:'conflict', resolve:'passed', weigh:'passed', govern:'blocked', executor:'halted' }} detail="halted at GOVERN · policy payout-v4" />
+      <CausalChain states={{ agents:'passed', conflict:'conflict', resolve:'active', weigh:'idle', govern:'idle', executor:'idle' }} detail="resolving conflict" />
+      <CausalChain states={{ agents:'passed', conflict:'clear', resolve:'passed', weigh:'passed', govern:'escalated', executor:'halted' }} detail="escalated to review" />
+      <CausalChain size="sm" showLabels={false} states={{ agents:'passed', conflict:'clear', resolve:'passed', weigh:'passed', govern:'passed', executor:'blocked' }} detail="execution failed · HTTP 503" />
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card />);
+</script></body></html>

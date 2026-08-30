@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" class="sentinel-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>Sentinel — background system exploration</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+body{margin:0;background:#0B0B0D;font:var(--type-body);color:var(--text-primary)}
+.frame{position:absolute;width:1180px;height:820px;overflow:hidden;background:var(--bg-app);border:1px solid var(--border-subtle);isolation:isolate}
+.cap{position:absolute;font:var(--type-label);letter-spacing:var(--ls-label);text-transform:uppercase;color:#6A6A66;white-space:nowrap}
+.capn{color:#98978F;text-transform:none;letter-spacing:var(--ls-body);font:var(--type-body-sm);max-width:1180px;white-space:normal}
+.bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.ui{position:relative;z-index:1;height:100%;overflow:hidden}
+.hdr{display:flex;align-items:center;gap:26px;padding:0 28px;height:48px;border-bottom:1px solid var(--border-subtle)}
+.brand{font:var(--fw-semibold) var(--fs-14)/1 var(--font-sans);letter-spacing:-0.01em}
+.nav{display:flex;gap:22px}
+.nav span{font:var(--fw-medium) var(--fs-13)/1 var(--font-sans);color:#6A6A66}
+.nav span.on{color:var(--text-primary);box-shadow:inset 0 -1px 0 var(--text-primary);padding-bottom:15px;margin-bottom:-16px}
+.body{max-width:1080px;margin:0 auto;padding:44px 28px;display:flex;flex-direction:column;gap:42px}
+h1{font:var(--fw-semibold) 30px/1.2 var(--font-sans);letter-spacing:-0.026em;max-width:24ch}
+.lede{font:var(--type-body);color:#98978F;max-width:62ch;text-wrap:pretty}
+.eyebrow{font:var(--type-label);letter-spacing:var(--ls-label);text-transform:uppercase;color:#6A6A66}
+.sig{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px}
+.sig>div{display:flex;flex-direction:column;gap:7px}
+.sig .l{font:var(--type-label);letter-spacing:var(--ls-label);text-transform:uppercase;color:#6A6A66}
+.sig .v{font:var(--fw-regular) 26px/1 var(--font-mono);letter-spacing:-0.01em}
+.sig .n{font:var(--type-body-sm);color:#6A6A66}
+.blk{display:flex;flex-direction:column;gap:14px}
+.blkh{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--border-subtle);padding-bottom:11px}
+.blkt{font:var(--fw-medium) var(--fs-15)/1.3 var(--font-sans)}
+.row{display:grid;grid-template-columns:108px minmax(0,1fr) 200px 96px;gap:20px;align-items:baseline;padding:15px 8px 15px 0;border-bottom:1px solid var(--border-hairline)}
+.row:last-child{border-bottom:0}
+.mono{font:var(--type-mono);color:#6A6A66}
+.rt{font:var(--fw-medium) var(--fs-15)/1.3 var(--font-sans);letter-spacing:-0.008em}
+.rr{font:var(--type-body-sm);color:#98978F}
+.rd{font:var(--type-body-sm);color:#6A6A66}
+.out{font:var(--fw-medium) var(--fs-13)/1.2 var(--font-sans);text-align:right}
+.chain{display:flex;align-items:center}
+.chain span{font:var(--type-label);letter-spacing:var(--ls-label);text-transform:uppercase;color:#6A6A66;white-space:nowrap}
+.chain i{flex:1;height:1px;min-width:12px;margin:0 10px;background:var(--border-subtle)}
+</style>
+</head>
+<body>
+
+<div class="cap" style="left:40px;top:36px;font:var(--fw-semibold) 15px/1 var(--font-sans);letter-spacing:-0.01em;color:#E8E6E1;text-transform:none">Sentinel — ambient background system · three directions</div>
+<div class="cap capn" style="left:40px;top:62px;width:1180px">Same Control plane composition, same tokens, same hierarchy. Only the ambient layer differs. All three sit at or below 4% luminance contrast against <span class="mono" style="color:#98978F">#0B0B0D</span> and scroll with the canvas, never with content.</div>
+
+<div class="cap" style="left:40px;top:122px">A · Signal paths</div>
+<div class="cap capn" style="left:40px;top:142px;width:1180px">Horizontal traces crossing six junction columns — the causal chain as an ambient rhythm. Nodes brighten only at CONFLICT and GOVERN.</div>
+<div class="frame" id="fa" style="left:40px;top:178px"></div>
+
+<div class="cap" style="left:1300px;top:122px">B · Decision lattice</div>
+<div class="cap capn" style="left:1300px;top:142px;width:1180px">A sparse field of geometric blocks on a loose grid, a few connected. Reads as structure and record rather than motion.</div>
+<div class="frame" id="fb" style="left:1300px;top:178px"></div>
+
+<div class="cap" style="left:2560px;top:122px">C · Authorization field</div>
+<div class="cap capn" style="left:2560px;top:142px;width:1180px">A single large shield geometry anchored off the lower-right corner, with a sparse node mesh. The quietest of the three.</div>
+<div class="frame" id="fc" style="left:2560px;top:178px"></div>
+
+<div class="cap" style="left:40px;top:1038px">Motif at 8× opacity — reference only, never shipped at this strength</div>
+<div class="frame" id="fx" style="left:40px;top:1074px;height:300px;display:flex"></div>
+
+<script>
+const UI = `
+<div class="hdr">
+  <span class="brand">Sentinel</span>
+  <div class="nav"><span class="on">Control plane</span><span>Cases</span><span>Human review</span><span>Reliability</span><span>Audit</span><span>Scenario</span></div>
+</div>
+<div class="body">
+  <div style="display:flex;flex-direction:column;gap:11px">
+    <span class="eyebrow">Last 24 hours</span>
+    <h1>Sentinel governed 412 automated actions. Three stopped.</h1>
+    <p class="lede">396 executed as decided. Twelve were blocked by policy, four escalated for review, two failed downstream. Nothing executed without a GOVERN decision.</p>
+  </div>
+  <div class="sig">
+    <div><span class="l">Execution</span><span class="v">99.4%</span><span class="n">396 of 398 calls succeeded</span></div>
+    <div><span class="l">Governance latency</span><span class="v">118ms</span><span class="n">p99, budget 150ms</span></div>
+    <div><span class="l">Agent conflict</span><span class="v">9.2%</span><span class="n">38 cases needed RESOLVE</span></div>
+    <div><span class="l">Audit completeness</span><span class="v">100%</span><span class="n">no gaps in 30 days</span></div>
+  </div>
+  <div class="blk">
+    <div class="blkh"><div style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow">Needs attention</span><span class="blkt">3 cases the system could not close</span></div><span class="rd">All cases →</span></div>
+    <div>
+      <div class="row"><span class="mono">CASE-2041</span><div style="display:flex;flex-direction:column;gap:5px"><span class="rt">Vendor payout above ceiling</span><span class="rr">Vendor ceiling exceeded by 41%</span></div><span class="rd">Payouts · ₹18.4L</span><span class="out" style="color:var(--status-blocked-fg)">Blocked</span></div>
+      <div class="row"><span class="mono">CASE-2043</span><div style="display:flex;flex-direction:column;gap:5px"><span class="rt">Merchant onboarding held</span><span class="rr">Document set incomplete for tier</span></div><span class="rd">Onboarding · KYC</span><span class="out" style="color:var(--status-escalated-fg)">Escalated</span></div>
+      <div class="row"><span class="mono">CASE-2044</span><div style="display:flex;flex-direction:column;gap:5px"><span class="rt">Refund batch partial failure</span><span class="rr">Downstream rejected 2 of 9 items</span></div><span class="rd">Refunds · ₹6.1L</span><span class="out" style="color:#D96B6B">Failed</span></div>
+    </div>
+  </div>
+  <div class="chain"><span>Agents</span><i></i><span style="color:var(--status-conflict-fg)">Conflict</span><i></i><span>Resolve</span><i></i><span>Weigh</span><i></i><span style="color:var(--status-blocked-fg)">Govern</span><i></i><span>Executor</span></div>
+</div>`;
+
+const W=1180,H=820;
+
+function pathsSVG(k){
+  const cols=[0.10,0.26,0.42,0.56,0.70,0.86].map(f=>Math.round(f*W));
+  let s='';
+  const rows=[70,148,232,318,404,486,566,650,736];
+  rows.forEach((y,ri)=>{
+    const amp=(ri%2?1:-1)*(10+ri*2);
+    let d='M -40 '+y;
+    cols.forEach((x,i)=>{ d+=' C '+(x-70)+' '+y+', '+(x-40)+' '+(y+(i%2?amp:-amp)*0.35)+', '+x+' '+y; });
+    d+=' L '+(W+40)+' '+y;
+    s+='<path d="'+d+'" fill="none" stroke="rgba(255,255,255,'+(0.030*k)+')" stroke-width="1"/>';
+  });
+  rows.forEach((y,ri)=>cols.forEach((x,ci)=>{
+    const hot=(ci===1&&ri%3===0)||(ci===4&&ri%4===1);
+    const r=hot?2.4:1.5;
+    const c=hot?(ci===1?'rgba(158,138,184,'+(0.30*k)+')':'rgba(200,122,108,'+(0.28*k)+')'):'rgba(255,255,255,'+(0.055*k)+')';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'"/>';
+    if(hot) s+='<circle cx="'+x+'" cy="'+y+'" r="6" fill="none" stroke="'+c+'" stroke-width="1" opacity="0.45"/>';
+  }));
+  cols.forEach(x=>{ s+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+H+'" stroke="rgba(110,158,150,'+(0.026*k)+')" stroke-width="1"/>'; });
+  return '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
+}
+
+function latticeSVG(k){
+  let s='';const g=74,pad=26;
+  for(let y=pad;y<H;y+=g)for(let x=pad;x<W;x+=g){
+    const n=(x*31+y*17)%100;
+    if(n<52) continue;
+    const w=n<78?18:34,h=n<78?12:22,r=2;
+    const fill=n>94?'rgba(110,158,150,'+(0.055*k)+')':'none';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+r+'" fill="'+fill+'" stroke="rgba(255,255,255,'+(0.038*k)+')" stroke-width="1"/>';
+    if(n>70&&x+g<W) s+='<line x1="'+(x+w)+'" y1="'+(y+h/2)+'" x2="'+(x+g)+'" y2="'+(y+h/2)+'" stroke="rgba(255,255,255,'+(0.022*k)+')" stroke-width="1"/>';
+    if(n>86&&y+g<H) s+='<line x1="'+(x+w/2)+'" y1="'+(y+h)+'" x2="'+(x+w/2)+'" y2="'+(y+g)+'" stroke="rgba(255,255,255,'+(0.018*k)+')" stroke-width="1"/>';
+  }
+  return '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
+}
+
+function shieldSVG(k){
+  let s='';
+  const cx=W-150,cy=H-120,sc=3.05;
+  const sh=(o)=>{const w=110*o,h=132*o;return 'M '+cx+' '+(cy-h/2)+' L '+(cx+w/2)+' '+(cy-h/2+h*0.22)+' L '+(cx+w/2)+' '+(cy+h*0.06)+' C '+(cx+w/2)+' '+(cy+h*0.34)+', '+(cx+w*0.22)+' '+(cy+h*0.46)+', '+cx+' '+(cy+h/2)+' C '+(cx-w*0.22)+' '+(cy+h*0.46)+', '+(cx-w/2)+' '+(cy+h*0.34)+', '+(cx-w/2)+' '+(cy+h*0.06)+' L '+(cx-w/2)+' '+(cy-h/2+h*0.22)+' Z';};
+  [sc,sc*0.72,sc*0.44].forEach((o,i)=>{s+='<path d="'+sh(o)+'" fill="none" stroke="rgba(255,255,255,'+((0.030-i*0.006)*k)+')" stroke-width="1"/>';});
+  s+='<path d="'+sh(sc*0.44)+'" fill="rgba(110,158,150,'+(0.030*k)+')"/>';
+  const pts=[[90,110],[230,64],[330,190],[170,240],[64,320],[280,330],[420,268],[150,430],[330,470],[60,540],[250,600],[430,560],[120,690],[340,720],[520,640],[520,150],[640,400],[600,700]];
+  pts.forEach((p,i)=>{
+    s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="1.6" fill="rgba(255,255,255,'+(0.055*k)+')"/>';
+    const q=pts[(i+3)%pts.length];
+    if(Math.hypot(q[0]-p[0],q[1]-p[1])<260) s+='<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+q[0]+'" y2="'+q[1]+'" stroke="rgba(255,255,255,'+(0.020*k)+')" stroke-width="1"/>';
+  });
+  return '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
+}
+
+const dirs={fa:pathsSVG,fb:latticeSVG,fc:shieldSVG};
+Object.entries(dirs).forEach(([id,fn])=>{
+  document.getElementById(id).innerHTML='<div class="bg">'+fn(1)+'</div><div class="ui">'+UI+'</div>';
+});
+const x=document.getElementById('fx');
+x.innerHTML=['A','B','C'].map((L,i)=>{
+  const fn=[pathsSVG,latticeSVG,shieldSVG][i];
+  return '<div style="position:relative;flex:1;overflow:hidden;border-right:'+(i<2?'1px solid var(--border-subtle)':'0')+'"><div style="position:absolute;inset:0;transform:scale(0.333);transform-origin:0 0;width:'+(W*3)+'px;height:'+(H*3)+'px">'+fn(8)+'</div><span style="position:absolute;left:14px;top:12px;font:var(--type-label);letter-spacing:var(--ls-label);color:#98978F">'+L+'</span></div>';
+}).join('');
+</script>
+</body>
+</html>

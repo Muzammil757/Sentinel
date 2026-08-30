@@ -1,0 +1,70 @@
+<!-- @dsCard group="Sentinel Control Plane" viewport="1440x900" name="Control plane" subtitle="Operator console: what happened, what Sentinel decided, and why" -->
+<!-- @startingPoint section="Sentinel" subtitle="Full dark control-plane console" viewport="1440x900" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Sentinel — Control plane</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{height:100%}body{margin:0;overflow:hidden;background:#0A0C11}#root{height:100vh}</style>
+</head><body class="sentinel-dark"><div id="root"></div>
+<script type="text/babel" src="Data.jsx"></script>
+<script type="text/babel" src="Primitives.jsx"></script>
+<script type="text/babel" src="Shell.jsx"></script>
+<script type="text/babel" src="Overview.jsx"></script>
+<script type="text/babel" src="Cases.jsx"></script>
+<script type="text/babel" src="DecisionRecord.jsx"></script>
+<script type="text/babel" src="Review.jsx"></script>
+<script type="text/babel" src="Reliability.jsx"></script>
+<script type="text/babel" src="Audit.jsx"></script>
+<script type="text/babel" src="Scenario.jsx"></script>
+<script type="text/babel">
+(() => {
+const { Toast } = window.SentinelDesignSystem_8a81b0;
+
+function App() {
+  const [view, setView] = React.useState('overview');
+  const [selected, setSelected] = React.useState('CASE-2041');
+  const [record, setRecord] = React.useState(null);
+  const [toast, setToast] = React.useState(null);
+  const cases = window.CASES;
+
+  const showToast = (t) => { setToast(t); window.clearTimeout(window.__st); window.__st = window.setTimeout(() => setToast(null), 3400); };
+  const openRecord = (id) => { setSelected(id); setRecord(id); };
+  const go = (v) => { setRecord(null); setView(v); };
+
+  const attention = cases.filter((c) => ['blocked', 'escalated', 'failed'].includes(c.status)).length;
+  const reviewCount = cases.filter((c) => c.stages.some((s) => s.label === 'Review' && s.state === 'active')).length;
+
+  let body;
+  if (record) {
+    body = <window.DecisionRecord c={cases.find((c) => c.id === record)} onBack={() => setRecord(null)}
+      onToast={showToast} />;
+  } else if (view === 'overview') {
+    body = <window.Overview cases={cases} onOpen={openRecord} onGo={go} />;
+  } else if (view === 'cases') {
+    body = <window.Cases cases={cases} onOpen={openRecord} />;
+  } else if (view === 'review') {
+    body = <window.Review cases={cases} onOpen={openRecord}
+      onToast={() => showToast({ tone: 'neutral', title: 'Annotation recorded', detail: 'audit trail updated · outcome unchanged' })} />;
+  } else if (view === 'reliability') {
+    body = <window.Reliability executors={window.EXECUTORS} cases={cases} />;
+  } else if (view === 'audit') {
+    body = <window.Audit audit={window.GLOBAL_AUDIT} />;
+  } else {
+    body = <window.Scenario steps={window.SCENARIO} onOpen={openRecord} />;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-app)' }}>
+      <window.CommandBar view={record ? 'cases' : view} onSelect={go}
+        counts={{ review: reviewCount }} attention={attention} />
+      <main style={{ flex: 1, minHeight: 0, position: 'relative' }}>{body}</main>
+      {toast ? <div style={{ position: 'fixed', left: 20, bottom: 20, zIndex: 80 }}><Toast {...toast} onDismiss={() => setToast(null)} /></div> : null}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+})();
+</script></body></html>
