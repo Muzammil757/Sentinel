@@ -145,6 +145,11 @@ function mapCandidates(candidates, govern) {
         score: s ? s.total_score.toFixed(2) : '0.00',
         verdict,
         rationale: c.rationale,
+        // WEIGH's own real reason this candidate was excluded (e.g.
+        // "blocked_by:HC_UNAUTHORIZED_ACTION") -- only meaningful when
+        // s.eligible is false; null otherwise so a chosen/considered
+        // candidate never renders a stray "why not" line.
+        eligibilityBasis: s && s.eligible === false ? s.eligibility_basis : null,
       };
     });
 }

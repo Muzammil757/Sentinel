@@ -75,14 +75,20 @@ function Positions({ positions }) {
 /* RESOLVE's own output: the candidates it generated, listed flat with no
    rank, score or chosen/rejected color -- deliberately undifferentiated, so
    this reads as "options on the table" rather than a decision. WEIGH scores
-   and ranks these same candidates below (Scoring); RESOLVE never does. */
+   and ranks these same candidates below (Scoring); RESOLVE never does.
+   Each candidate's `rationale` is RESOLVE's real, own sentence for why that
+   option exists (e.g. "Static agent priority order favors 'x'...") -- it was
+   already fetched through Data.jsx but never rendered anywhere. */
 function ResolveOptions({ candidates }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {candidates.map((o) => (
-        <div key={o.candidateId} style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
-          <span style={{ font: 'var(--type-mono)', color: 'var(--text-tertiary)', flex: '0 0 auto' }}>{o.candidateId}</span>
-          <span style={{ font: 'var(--type-body-sm)', color: 'var(--text-secondary)', minWidth: 0 }}>{o.name}</span>
+        <div key={o.candidateId} style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
+            <span style={{ font: 'var(--type-mono)', color: 'var(--text-tertiary)', flex: '0 0 auto' }}>{o.candidateId}</span>
+            <span style={{ font: 'var(--type-body-sm)', color: 'var(--text-secondary)', minWidth: 0 }}>{o.name}</span>
+          </span>
+          {o.rationale ? <span style={{ font: 'var(--type-body-sm)', color: 'var(--text-tertiary)', maxWidth: '58ch', textWrap: 'pretty' }}>{o.rationale}</span> : null}
         </div>
       ))}
     </div>
@@ -96,21 +102,28 @@ function Scoring({ candidates }) {
       {candidates.map((o) => {
         const chosen = o.verdict === 'chosen';
         return (
-          <div key={o.rank} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 88px 42px 72px', gap: 14, alignItems: 'center', padding: '8px 0', borderTop: '1px solid var(--border-hairline)' }}>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-              <span style={{ font: `${chosen ? 'var(--fw-medium)' : 'var(--fw-regular)'} var(--fs-13)/1.35 var(--font-sans)`, color: chosen ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{o.name}</span>
-              {/* candidateId is the exact id GOVERN's own reasoning below
-                  quotes (e.g. "candidate 'defer_to_agent-1' is permitted") --
-                  shown here so it's visibly the same candidate as `name`. */}
-              <span style={{ font: 'var(--type-mono)', color: 'var(--text-tertiary)' }}>{o.candidateId} · {o.proposedBy}</span>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', height: 2, background: 'var(--border-hairline)' }}>
-              <span style={{ width: `${(parseFloat(o.score) / top) * 100}%`, height: 2, background: chosen ? 'var(--status-allowed-dot)' : 'var(--text-tertiary)', opacity: chosen ? 1 : .45 }} />
-            </span>
-            <span data-numeric style={{ font: 'var(--type-mono)', fontSize: 'var(--fs-13)', color: chosen ? 'var(--text-primary)' : 'var(--text-tertiary)', textAlign: 'right' }}>{o.score}</span>
-            <span style={{ font: 'var(--type-body-sm)', textAlign: 'right', color: chosen ? 'var(--status-allowed-fg)' : o.verdict === 'rejected' ? 'var(--status-blocked-fg)' : 'var(--text-tertiary)' }}>
-              {chosen ? 'Chosen' : o.verdict === 'rejected' ? 'Rejected' : 'Considered'}
-            </span>
+          <div key={o.rank} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 0', borderTop: '1px solid var(--border-hairline)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 88px 42px 72px', gap: 14, alignItems: 'center' }}>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                <span style={{ font: `${chosen ? 'var(--fw-medium)' : 'var(--fw-regular)'} var(--fs-13)/1.35 var(--font-sans)`, color: chosen ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{o.name}</span>
+                {/* candidateId is the exact id GOVERN's own reasoning below
+                    quotes (e.g. "candidate 'defer_to_agent-1' is permitted") --
+                    shown here so it's visibly the same candidate as `name`. */}
+                <span style={{ font: 'var(--type-mono)', color: 'var(--text-tertiary)' }}>{o.candidateId} · {o.proposedBy}</span>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', height: 2, background: 'var(--border-hairline)' }}>
+                <span style={{ width: `${(parseFloat(o.score) / top) * 100}%`, height: 2, background: chosen ? 'var(--status-allowed-dot)' : 'var(--text-tertiary)', opacity: chosen ? 1 : .45 }} />
+              </span>
+              <span data-numeric style={{ font: 'var(--type-mono)', fontSize: 'var(--fs-13)', color: chosen ? 'var(--text-primary)' : 'var(--text-tertiary)', textAlign: 'right' }}>{o.score}</span>
+              <span style={{ font: 'var(--type-body-sm)', textAlign: 'right', color: chosen ? 'var(--status-allowed-fg)' : o.verdict === 'rejected' ? 'var(--status-blocked-fg)' : 'var(--text-tertiary)' }}>
+                {chosen ? 'Chosen' : o.verdict === 'rejected' ? 'Rejected' : 'Considered'}
+              </span>
+            </div>
+            {/* WEIGH's own real reason this candidate was excluded -- e.g.
+                "blocked_by:HC_UNAUTHORIZED_ACTION" -- was fetched through
+                Data.jsx but never shown; without it a "Rejected" badge gave
+                no reason. Only present when eligible === false. */}
+            {o.eligibilityBasis ? <span style={{ font: 'var(--type-mono)', fontSize: 'var(--fs-12)', color: 'var(--status-blocked-fg)' }}>{o.eligibilityBasis}</span> : null}
           </div>
         );
       })}
