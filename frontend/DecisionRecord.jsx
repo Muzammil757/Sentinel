@@ -72,6 +72,23 @@ function Positions({ positions }) {
   );
 }
 
+/* RESOLVE's own output: the candidates it generated, listed flat with no
+   rank, score or chosen/rejected color -- deliberately undifferentiated, so
+   this reads as "options on the table" rather than a decision. WEIGH scores
+   and ranks these same candidates below (Scoring); RESOLVE never does. */
+function ResolveOptions({ candidates }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {candidates.map((o) => (
+        <div key={o.candidateId} style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
+          <span style={{ font: 'var(--type-mono)', color: 'var(--text-tertiary)', flex: '0 0 auto' }}>{o.candidateId}</span>
+          <span style={{ font: 'var(--type-body-sm)', color: 'var(--text-secondary)', minWidth: 0 }}>{o.name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Scoring({ candidates }) {
   const top = Math.max.apply(null, candidates.map((o) => parseFloat(o.score)));
   return (
@@ -338,8 +355,12 @@ function DecisionRecord({ c, onBack, onToast }) {
             {c.positions.length ? <Disclosure label="Show positions" count={c.positions.length}><Positions positions={c.positions} /></Disclosure> : null}
           </Stage>
           <Stage label="Conflict" mark={c.positions.length ? 'split' : 'none'}
-            summary={c.positions.length ? `Disagreed on ${c.conflictSubject.charAt(0).toLowerCase() + c.conflictSubject.slice(1)}.` : 'No disagreement — the agents returned the same position.'} />
-          <Stage label="Resolve" summary={c.candidates.length === 1 ? 'A single viable option remained.' : `Reconciled into ${c.candidates.length} mutually exclusive options.`} />
+            summary={c.positions.length ? `The Conflict Matrix detected disagreement on ${c.conflictSubject.charAt(0).toLowerCase() + c.conflictSubject.slice(1)}.` : 'The Conflict Matrix found no disagreement — the agents proposed the same position.'} />
+          <Stage label="Resolve" summary={c.candidates.length === 1
+            ? 'RESOLVE generated a single viable option.'
+            : `RESOLVE generated ${c.candidates.length} mutually exclusive options${c.positions.length ? ' from that disagreement' : ''} — considered below, not yet scored or decided.`}>
+            <ResolveOptions candidates={c.candidates} />
+          </Stage>
           <Stage label="Weigh" summary={`“${chose.name}” (${chose.candidateId}) scored highest at ${chose.score}.`}>
             <Disclosure label="Show scoring" count={c.candidates.length}><Scoring candidates={c.candidates} /></Disclosure>
           </Stage>
