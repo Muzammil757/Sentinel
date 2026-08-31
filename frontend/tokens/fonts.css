@@ -1,0 +1,52 @@
+/* Self-hosted IBM Plex Sans / IBM Plex Mono (latin subset, weights 400/500/600
+   -- the only ones this system actually uses, per typography.css).
+   Previously loaded via @import from fonts.googleapis.com; that request was
+   showing as "(canceled)" in the network tab -- most likely a privacy/ad
+   blocker treating a third-party Google Fonts request as a tracker, since
+   the URL itself resolves fine outside a browser. Self-hosting removes the
+   external dependency entirely rather than guessing at a workaround: no
+   third-party request, nothing for a blocker to cancel, no font-loading
+   dependency on internet access at demo time. Files are the exact same
+   IBM Plex binaries Google Fonts serves (fetched once, vendored here) --
+   the "nearest available match" rationale in the design's own README is
+   unchanged, only the delivery mechanism is.
+
+   IBM Plex Sans ships as a variable font on Google's CDN: weights 400/500/600
+   are served from one file (`font-weight: 400 600` is a supported range, not
+   three separate ones). IBM Plex Mono is three separate static files. */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("../fonts/IBMPlexSans-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/IBMPlexMono-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/IBMPlexMono-500.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/IBMPlexMono-600.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

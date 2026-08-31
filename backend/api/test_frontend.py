@@ -30,7 +30,7 @@ def test_root_serves_the_frontend_index(api_client):
 
 
 def test_frontend_javascript_is_served(api_client):
-    response = api_client.get("/app.js")
+    response = api_client.get("/Data.jsx")
     assert response.status_code == 200
     assert "API_BASE" in response.text
 
@@ -45,7 +45,7 @@ def test_frontend_source_contains_no_supabase_credentials():
     assert FRONTEND_DIR.is_dir(), "frontend/ directory is expected to exist"
     checked_any = False
     for path in FRONTEND_DIR.rglob("*"):
-        if path.suffix not in (".html", ".js", ".css"):
+        if path.suffix not in (".html", ".js", ".jsx", ".css"):
             continue
         checked_any = True
         text = path.read_text(encoding="utf-8")
@@ -68,10 +68,10 @@ def test_frontend_hides_exactly_the_three_known_verification_artifacts():
     # (never an internal UUID), not a naming-convention guess -- so it must
     # name exactly these three ids and nothing broader (e.g. no "doesn't
     # start with scenario-" heuristic that could hide a legitimate case).
-    app_js = (FRONTEND_DIR / "app.js").read_text(encoding="utf-8")
+    data_jsx = (FRONTEND_DIR / "Data.jsx").read_text(encoding="utf-8")
 
-    match = re.search(r"HIDDEN_EXTERNAL_CASE_IDS\s*=\s*new Set\(\[(.*?)\]\)", app_js, re.DOTALL)
-    assert match, "expected a HIDDEN_EXTERNAL_CASE_IDS denylist in frontend/app.js"
+    match = re.search(r"HIDDEN_EXTERNAL_CASE_IDS\s*=\s*new Set\(\[(.*?)\]\)", data_jsx, re.DOTALL)
+    assert match, "expected a HIDDEN_EXTERNAL_CASE_IDS denylist in frontend/Data.jsx"
 
     hidden_ids = set(re.findall(r"[\"']([^\"']+)[\"']", match.group(1)))
     assert hidden_ids == KNOWN_VERIFICATION_ARTIFACTS
@@ -80,8 +80,17 @@ def test_frontend_hides_exactly_the_three_known_verification_artifacts():
 
 
 def test_frontend_still_fetches_the_complete_case_list_from_the_api():
-    # The filter must be presentation-only: app.js still calls GET /cases
-    # for the full, truthful list and only narrows what it renders.
-    app_js = (FRONTEND_DIR / "app.js").read_text(encoding="utf-8")
-    assert 'apiGet("/cases")' in app_js
-    assert "visibleCases" in app_js
+    # The filter must be presentation-only: Data.jsx still calls GET /cases
+    # for the full, truthful list and only narrows what it maps/renders.
+    data_jsx = (FRONTEND_DIR / "Data.jsx").read_text(encoding="utf-8")
+    assert "apiGet('/cases')" in data_jsx
+    assert "HIDDEN_EXTERNAL_CASE_IDS.has" in data_jsx
+
+
+def test_frontend_no_longer_ships_the_old_hardcoded_fixture_ids():
+    # Data.jsx replaces the design export's literal CASE-2041..CASE-2044
+    # fixtures with real API calls -- those ids must not survive into the
+    # adapter that actually runs.
+    data_jsx = (FRONTEND_DIR / "Data.jsx").read_text(encoding="utf-8")
+    assert "CASE-2041" not in data_jsx
+    assert "loadSentinelData" in data_jsx
