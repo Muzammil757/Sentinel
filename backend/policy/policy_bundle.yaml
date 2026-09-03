@@ -71,6 +71,8 @@ scoring:
     WIN_BACK_OFFER:        { financial_exposure_prevention: -0.30, fraud_risk_reduction: -0.40, compliance_risk_reduction: -0.20, merchant_trust:  0.90, operational_cost:  0.30 }
     RETENTION_MESSAGE:     { financial_exposure_prevention:  0.00, fraud_risk_reduction: -0.10, compliance_risk_reduction:  0.00, merchant_trust:  0.50, operational_cost:  0.20 }
     NO_RETENTION_ACTION:   { financial_exposure_prevention:  0.00, fraud_risk_reduction:  0.00, compliance_risk_reduction:  0.00, merchant_trust: -0.20, operational_cost:  0.30 }
+    PRESERVE_EXPERIENCE:  { financial_exposure_prevention: -0.30, fraud_risk_reduction: -0.30, compliance_risk_reduction: -0.10, merchant_trust:  0.60, operational_cost:  0.40 }
+    ESCALATE_TO_RISK:      { financial_exposure_prevention:  0.60, fraud_risk_reduction:  0.70, compliance_risk_reduction:  0.40, merchant_trust: -0.50, operational_cost: -0.40 }
 
   strategy_effects:
     HOLD_BOTH_PENDING_REVIEW: { financial_exposure_prevention: 0.60, fraud_risk_reduction: 0.50, compliance_risk_reduction: 0.50, merchant_trust: -0.50, operational_cost: -0.90 }

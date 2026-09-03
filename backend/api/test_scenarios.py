@@ -9,6 +9,7 @@ def test_list_scenarios_returns_the_curated_set(api_client):
         "ambiguous_case",
         "executor_rejection",
         "pipeline_failure",
+        "live_ai_customer_risk",
     }
 
 

@@ -64,6 +64,16 @@ SUPPORTED_ACTIONS = {
         "target": "customer",
         "detail": "Mock: no retention action was taken, by design.",
     },
+    "PRESERVE_EXPERIENCE": {
+        "effect": "CUSTOMER_EXPERIENCE_PRESERVED",
+        "target": "customer",
+        "detail": "Mock: the order was allowed to proceed without disruption to preserve the customer's experience.",
+    },
+    "ESCALATE_TO_RISK": {
+        "effect": "ESCALATED_TO_RISK_TEAM",
+        "target": "customer",
+        "detail": "Mock: the case was handed to the risk/logistics team for review.",
+    },
 }
 
 
